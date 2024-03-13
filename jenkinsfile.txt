@@ -1,0 +1,36 @@
+pipeline {
+    agent any
+    stages {
+        stage('compile') {
+           steps {
+              git 'https://github.com/anveshpanjala/samplejavappforpractice.git'
+              sh '/usr/share/maven/bin/mvn compile'
+           }
+        }
+        stage('codereview-pmd') {
+           steps {
+              sh '/usr/share/maven/bin/mvn -P metrics pmd:pmd'
+           }
+           post {
+               success {
+                  recordIssues(tools: [pmdParser(pattern: '**/pmd.xml')])
+               }
+           }
+        }
+        stage('unit-test') {
+           steps {
+              sh '/usr/share/maven/bin/mvn test'
+                 }
+           post {
+               success {
+                  junit 'target/surefire-reports/*.xml'
+               }
+           }
+        }
+        stage('package') {
+           steps {
+              sh '/usr/share/maven/bin/mvn package'
+           }
+        }
+    }
+}
